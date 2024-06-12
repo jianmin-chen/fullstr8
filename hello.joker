@@ -1,0 +1,9 @@
+-- hello
+(joker (ace of clubs) (jack of spades) (ace of diamonds))
+(joker (ace of clubs (104)))
+(joker (ace of clubs (101)))
+(joker (ace of clubs (108)))
+(joker (ace of clubs (111)))
+(two of hearts)
+(two of hearts)
+(jack of spades)
