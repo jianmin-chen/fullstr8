@@ -1,28 +1,9 @@
+use crate::deck::deck;
 use serde::Serialize;
 
 #[derive(Debug, PartialEq, Serialize)]
 pub enum TokenType {
-  LeftParen, RightParen, Card, Number
-}
-
-pub fn deck() -> Vec<String> {
-  // Generate all cards in a deck
-  let suits = vec!["clubs", "diamonds", "hearts", "spades"];
-  let mut cards: Vec<String> = Vec::new();
-  for suit in &suits {
-    for n in 2..11 {
-      cards.push(n.to_string() + " of " + suit);
-    }
-    for n in vec!["two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"] {
-      cards.push(String::from(n) + " of " + suit);
-    }
-    cards.push("ace of ".to_string() + suit);
-    cards.push("jack of ".to_string() + suit);
-    cards.push("queen of ".to_string() + suit);
-    cards.push("kind of ".to_string() + suit);
-  }
-  cards.push(String::from("joker"));
-  cards
+  LeftParen, RightParen, Card, Number, Eof
 }
 
 #[derive(Debug, Serialize)]
@@ -58,18 +39,18 @@ impl Lexer {
   }
 
   pub fn peek(&self) -> char {
-    if self.current + 1 >= self.program.len() {
+    if self.current + 1 > self.program.len() {
       return '\0'
     }
     self.program.chars().nth(self.current).unwrap()
   }
 
   pub fn advance(&mut self) -> char{
-    if self.current + 1 >= self.program.len() {
+    if self.current + 1 > self.program.len() {
       return '\0'
     }
     self.current += 1;
-    self.program.chars().nth(self.current).unwrap()
+    self.program.chars().nth(self.current - 1).unwrap()
   }
 
   pub fn r#match(&mut self, chr: char) -> bool {
@@ -94,10 +75,7 @@ impl Lexer {
       '(' => Some(Token::new(TokenType::LeftParen, repr)),
       ')' => Some(Token::new(TokenType::RightParen, repr)),
       '-' => {
-        while self.peek() != '\n' {
-          if self.peek() == '\0' {
-            panic!("Unexpected end of file");
-          }
+        while self.peek() != '\n' && self.peek() != '\0' {
           self.advance();
         }
         None
@@ -137,5 +115,6 @@ impl Lexer {
     while self.peek() != '\0' {
       self.scan_token();
     }
+    self.tokens.push(Token::new(TokenType::Eof, String::from("EOF")));
   }
 }

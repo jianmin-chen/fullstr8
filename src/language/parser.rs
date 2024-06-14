@@ -1,15 +1,27 @@
 use crate::language::lexer::{Token, TokenType};
+use serde::Serialize;
 
+#[derive(Debug, PartialEq, Serialize)]
+pub enum NodeType {
+  // NodeType is a limited subset of TokenType
+  // If these had types attached to them, they would be more useful in the interpreter
+  // But that's ok
+  Card,
+  Number
+}
+
+#[derive(Debug, Serialize)]
 pub struct Node {
-  pub caller: String,
   pub args: Vec<Node>,
+  pub kind: NodeType
 }
 
 impl Node {
-  pub fn new(caller: String, args: Vec<Node>) -> Self {
+  pub fn new(caller: String, args: Vec<Node>, kind: NodeType) -> Self {
     Self {
       caller,
       args,
+      kind
     }
   }
 }
@@ -29,62 +41,49 @@ impl Parser {
     }
   }
 
-  pub fn peek_type(&self) -> Option<&TokenType> {
-    if self.current + 1 >= self.tokens.len() {
-      return None;
-    }
-    Some(&self.tokens[self.current].kind)
+  pub fn peek_type(&self) -> &TokenType {
+    &self.tokens[self.current].kind
   }
 
-  pub fn peek(&self) -> Option<&Token> {
-    if self.current + 1 >= self.tokens.len() {
-      return None;
-    }
-    Some(&self.tokens[self.current])
+  pub fn peek(&self) -> &Token {
+    &self.tokens[self.current]
   }
 
-  pub fn advance(&mut self) -> Option<&Token> {
-    if self.current + 1 >= self.tokens.len() {
-      return None;
-    }
-    self.current += 1;
-    Some(&self.tokens[self.current])
-  }
-
-  pub fn eat(&mut self, keyword: TokenType) -> Option<&Token> {
-    if let Some(kind) = self.peek_type() {
-      if *kind == keyword {
-        Some(self.advance().unwrap())
-      } else {
-        panic!("Expected {:?} but got {:?}", *kind, keyword);
-      }
+  pub fn eat(&mut self, keyword: TokenType) -> &Token {
+    if *self.peek_type() == keyword {
+      self.current += 1;
+      &self.tokens[self.current - 1]
     } else {
-      panic!("Unexpected end of file");
+      panic!("Expected {:?} but got {:?}", keyword, self.peek_type());
     }
   }
 
   pub fn call(&mut self) -> Node {
     self.eat(TokenType::LeftParen);
-    let kind = self.peek_type().unwrap();
+    let kind = self.peek_type();
     match *kind {
       TokenType::Card => {
-        let caller = self.eat(TokenType::Card).unwrap();
+        let caller = self.eat(TokenType::Card);
         let value = caller.value.clone();
-        if *self.peek_type().unwrap() == TokenType::RightParen {
+        if *self.peek_type() == TokenType::RightParen {
           // No arguments
           self.eat(TokenType::RightParen);
-          return Node::new(value, Vec::new());
+          return Node::new(value, Vec::new(), NodeType::Card);
         } else {
           // Read arguments
           let mut callee: Vec<Node> = Vec::new();
-          while *self.peek_type().unwrap() != TokenType::RightParen {
-            callee.push(self.call());
+          while *self.peek_type() != TokenType::RightParen {
+            let node = self.call();
+            callee.push(node);
           }
-          return Node::new(value, callee);
+          self.eat(TokenType::RightParen);
+          return Node::new(value, callee, NodeType::Card);
         }
       },
       TokenType::Number => {
-        panic!("Working on it!");
+        let number = self.eat(TokenType::Number).value.clone();
+        self.eat(TokenType::RightParen);
+        return Node::new(number, Vec::new(), NodeType::Number);
       },
       _ => {
         panic!("Unexpected token of type {:?}", kind);
@@ -93,7 +92,9 @@ impl Parser {
   }
   
   pub fn parse(&mut self) {
-    while let Some(kind) = self.peek_type() {
+    while *self.peek_type() != TokenType::Eof {
+      let node = self.call();
+      self.ast.push(node);
     }
   }
 }

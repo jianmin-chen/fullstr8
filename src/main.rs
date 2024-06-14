@@ -5,10 +5,12 @@ use std::io;
 use std::io::Write;
 use serde_json::json;
 
+pub mod deck;
 pub mod language;
 pub mod server;
 
 use language::lexer::Lexer;
+use language::parser::Parser;
 use server::server::router;
 
 #[tokio::main]
@@ -30,6 +32,14 @@ async fn main() {
     if dbg == true {
       let dbg_lexer = json!(lexer.tokens);
       fs::write("lexer.json", dbg_lexer.to_string()).expect("Unable to write debugger output for lexer");
+    }
+
+    let mut parser = Parser::new(lexer.tokens);
+    parser.parse();
+
+    if dbg == true {
+      let dbg_parser = json!(parser.ast);
+      fs::write("parser.json", dbg_parser.to_string()).expect("Unabled to write debugger output for parser");
     }
   } else {  
     let mut stdin = io::stdin();

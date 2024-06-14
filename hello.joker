@@ -3,7 +3,15 @@
 (joker (ace of clubs (104)))
 (joker (ace of clubs (101)))
 (joker (ace of clubs (108)))
+(joker (ace of clubs (108)))
 (joker (ace of clubs (111)))
-(two of hearts)
-(two of hearts)
+(two of hearts)(two of hearts)(jack of spades)
 (jack of spades)
+(joker (ace of clubs (5)))
+-- while 2 left < 1 left
+(queen of spades (two of diamonds) (king of hearts) (jack of spades))
+(ace of spades (two of diamonds) (king of diamonds) (four of diamonds))
+-- move x amount right and store 3 left
+(ace of hearts)
+(queen of diamonds)
+(queen of hearts)
